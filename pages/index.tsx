@@ -44,6 +44,7 @@ export default function Home() {
   const [gearDropdownOpen, setGearDropdownOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const [sortMode, setSortMode] = useState<"ranking" | "bib" | "name">("ranking");
   const gearRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -184,7 +185,20 @@ export default function Home() {
     });
   }
 
-  const sortedItems = [...items].sort((a, b) => a.order - b.order);
+  const sortedItems = (() => {
+    if (sortMode === "bib") {
+      return [...items].sort((a, b) => {
+        if (a.number === null && b.number === null) return 0;
+        if (a.number === null) return 1;
+        if (b.number === null) return -1;
+        return a.number - b.number;
+      });
+    }
+    if (sortMode === "name") {
+      return [...items].sort((a, b) => a.item.localeCompare(b.item));
+    }
+    return [...items].sort((a, b) => a.order - b.order);
+  })();
   const anyDrawerOpen = drawerOpen || notesItem !== null || settingsOpen;
 
   return (
@@ -203,9 +217,17 @@ export default function Home() {
             </p>
           ) : (
             <div>
-              <div className="mb-6 flex flex-col gap-1 text-center">
-                <p className="text-sm text-gray-500">{`Player Count: ${sortedItems.length}`}</p>
-
+              <div className="mb-3 flex items-center gap-2">
+                <span className="text-xs text-gray-500">Sort by</span>
+                <select
+                  value={sortMode}
+                  onChange={(e) => setSortMode(e.target.value as "ranking" | "bib" | "name")}
+                  className="text-xs border border-gray-300 rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                >
+                  <option value="ranking">Ranking</option>
+                  <option value="bib">Bib Number</option>
+                  <option value="name">Name</option>
+                </select>
               </div>
               <SortableList
                 items={sortedItems}
@@ -214,6 +236,7 @@ export default function Home() {
                 onEdit={handleEdit}
                 onNotes={handleNotes}
                 onDelete={handleDelete}
+                draggable={sortMode === "ranking"}
               />
             </div>
           )}

@@ -24,9 +24,10 @@ interface Props {
   onEdit: (item: ListItem) => void;
   onNotes: (item: ListItem) => void;
   onDelete: (id: string) => void;
+  draggable?: boolean;
 }
 
-export function SortableList({ items, teamConfig, onReorder, onEdit, onNotes, onDelete }: Props) {
+export function SortableList({ items, teamConfig, onReorder, onEdit, onNotes, onDelete, draggable = true }: Props) {
   const sensors = useSensors(
     useSensor(MouseSensor),
     useSensor(TouchSensor, {
@@ -52,7 +53,7 @@ export function SortableList({ items, teamConfig, onReorder, onEdit, onNotes, on
 
   return (
     <DndContext
-      sensors={sensors}
+      sensors={draggable ? sensors : []}
       collisionDetection={closestCenter}
       onDragEnd={handleDragEnd}
     >
