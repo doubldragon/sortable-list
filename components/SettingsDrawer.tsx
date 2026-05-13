@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import type { TeamConfig } from "@/types";
 
 type DraftTeam = { enabled: boolean; count: string };
@@ -22,17 +22,17 @@ function configToDraft(config: TeamConfig): Draft {
 
 interface Props {
   open: boolean;
+  listName: string;
+  authorName: string;
   config: TeamConfig;
-  onSave: (config: TeamConfig) => void;
+  onSave: (config: TeamConfig, listName: string, authorName: string) => void;
   onClose: () => void;
 }
 
-export function SettingsDrawer({ open, config, onSave, onClose }: Props) {
+function SettingsForm({ listName, authorName, config, onSave, onClose }: Omit<Props, "open">) {
   const [draft, setDraft] = useState<Draft>(() => configToDraft(config));
-
-  useEffect(() => {
-    if (open) setDraft(configToDraft(config));
-  }, [open, config]);
+  const [draftName, setDraftName] = useState(listName);
+  const [draftAuthor, setDraftAuthor] = useState(authorName);
 
   const toggle = (key: keyof TeamConfig, enabled: boolean) =>
     setDraft((prev) => ({ ...prev, [key]: { ...prev[key], enabled } }));
@@ -46,10 +46,97 @@ export function SettingsDrawer({ open, config, onSave, onClose }: Props) {
       const n = parseInt(t.count);
       return isNaN(n) || n < 1 ? 1 : n;
     };
-    onSave({ black: parse(draft.black), blue: parse(draft.blue), gray: parse(draft.gray), white: parse(draft.white) });
+    onSave(
+      { black: parse(draft.black), blue: parse(draft.blue), gray: parse(draft.gray), white: parse(draft.white) },
+      draftName.trim(),
+      draftAuthor.trim(),
+    );
     onClose();
   };
 
+  return (
+    <div className="w-full max-w-[600px] mx-auto">
+      <div className="flex items-center justify-between mb-5">
+        <h2 className="text-lg font-semibold text-gray-900">Settings</h2>
+        <button
+          onClick={onClose}
+          className="text-gray-400 hover:text-gray-600 transition-colors"
+          aria-label="Close"
+        >
+          <i className="fa-solid fa-chevron-down" style={{ fontSize: 18 }} />
+        </button>
+      </div>
+
+      <div className="flex flex-col gap-3 mb-6">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">List Name</label>
+          <input
+            type="text"
+            value={draftName}
+            onChange={(e) => setDraftName(e.target.value)}
+            placeholder="Enter list name"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">Author</label>
+          <input
+            type="text"
+            value={draftAuthor}
+            onChange={(e) => setDraftAuthor(e.target.value)}
+            placeholder="Enter author name"
+            className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+          />
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-400 mb-4">
+        Select which teams to include and how many players per team
+      </p>
+      <div className="flex flex-col gap-4">
+        {TEAMS.map(({ key, label, swatchClass }) => (
+          <div key={key} className="flex items-center gap-3">
+            <input
+              type="checkbox"
+              id={`team-${key}`}
+              checked={draft[key].enabled}
+              onChange={(e) => toggle(key, e.target.checked)}
+              className="w-4 h-4 shrink-0 accent-blue-600"
+            />
+            <div className={`w-4 h-4 shrink-0 rounded-sm ${swatchClass}`} />
+            <label
+              htmlFor={`team-${key}`}
+              className="text-sm text-gray-700 flex-1 cursor-pointer select-none"
+            >
+              {label}
+            </label>
+            {draft[key].enabled && (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="number"
+                  value={draft[key].count}
+                  onChange={(e) => setCount(key, e.target.value)}
+                  min="1"
+                  className="w-16 border border-gray-300 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+                <span className="text-xs text-gray-500">players</span>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <button
+        onClick={handleSave}
+        className="mt-6 w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors"
+      >
+        Save
+      </button>
+    </div>
+  );
+}
+
+export function SettingsDrawer({ open, listName, authorName, config, onSave, onClose }: Props) {
   return (
     <div
       className={[
@@ -59,60 +146,14 @@ export function SettingsDrawer({ open, config, onSave, onClose }: Props) {
       ].join(" ")}
     >
       <div className="bg-white border-t border-gray-200 shadow-2xl rounded-t-2xl px-4 pt-4 pb-8">
-        <div className="w-full max-w-[600px] mx-auto">
-          <div className="flex items-center justify-between mb-1">
-            <h2 className="text-lg font-semibold text-gray-900">Team Settings</h2>
-            <button
-              onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
-              aria-label="Close"
-            >
-              <i className="fa-solid fa-chevron-down" style={{ fontSize: 18 }} />
-            </button>
-          </div>
-          <p className="text-xs text-gray-400 mb-5">
-            Select which teams you want to include and how many players per team
-          </p>
-          <div className="flex flex-col gap-4">
-            {TEAMS.map(({ key, label, swatchClass }) => (
-              <div key={key} className="flex items-center gap-3">
-                <input
-                  type="checkbox"
-                  id={`team-${key}`}
-                  checked={draft[key].enabled}
-                  onChange={(e) => toggle(key, e.target.checked)}
-                  className="w-4 h-4 shrink-0 accent-blue-600"
-                />
-                <div className={`w-4 h-4 shrink-0 rounded-sm ${swatchClass}`} />
-                <label
-                  htmlFor={`team-${key}`}
-                  className="text-sm text-gray-700 flex-1 cursor-pointer select-none"
-                >
-                  {label}
-                </label>
-                {draft[key].enabled && (
-                  <div className="flex items-center gap-1.5">
-                    <input
-                      type="number"
-                      value={draft[key].count}
-                      onChange={(e) => setCount(key, e.target.value)}
-                      min="1"
-                      className="w-16 border border-gray-300 rounded px-2 py-1 text-sm text-center focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                    />
-                    <span className="text-xs text-gray-500">players</span>
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-
-          <button
-            onClick={handleSave}
-            className="mt-6 w-full bg-blue-600 text-white font-semibold py-2 rounded-lg hover:bg-blue-700 transition-colors"
-          >
-            Save
-          </button>
-        </div>
+        <SettingsForm
+          key={open ? "open" : "closed"}
+          listName={listName}
+          authorName={authorName}
+          config={config}
+          onSave={onSave}
+          onClose={onClose}
+        />
       </div>
     </div>
   );
