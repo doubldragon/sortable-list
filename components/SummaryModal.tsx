@@ -60,6 +60,7 @@ export function SummaryModal({ open, items, config, onClose }: Props) {
       >
         <div className="flex items-center justify-between px-5 pt-5 pb-4 border-b border-gray-100">
           <h2 className="text-base font-semibold text-gray-900">Summary</h2>
+          <div className="text-sm text-gray-500">{items.length} Total</div>
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
