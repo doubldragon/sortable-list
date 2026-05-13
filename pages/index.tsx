@@ -1,9 +1,10 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import type { ListItem, TeamConfig } from "@/types";
 import { SortableList } from "@/components/SortableList";
 import { AddItemDrawer } from "@/components/AddItemDrawer";
 import { NotesDrawer } from "@/components/NotesDrawer";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
+import { SummaryModal } from "@/components/SummaryModal";
 import { EditableField } from "@/components/EditableField";
 
 function generateId(): string {
@@ -39,6 +40,9 @@ export default function Home() {
   const [notesItem, setNotesItem] = useState<ListItem | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [gearDropdownOpen, setGearDropdownOpen] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(false);
+  const gearRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -138,6 +142,15 @@ export default function Home() {
     );
   }, []);
 
+  useEffect(() => {
+    if (!gearDropdownOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (!gearRef.current?.contains(e.target as Node)) setGearDropdownOpen(false);
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [gearDropdownOpen]);
+
   function handleCloseDrawer() {
     setDrawerOpen(false);
     setEditingItem(null);
@@ -222,14 +235,49 @@ export default function Home() {
         onClose={() => setSettingsOpen(false)}
       />
 
-      {/* Settings button — upper left */}
-      <button
-        onClick={() => setSettingsOpen(true)}
-        className="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        aria-label="Settings"
-      >
-        <i className="fa-solid fa-gear" style={{ fontSize: 17 }} />
-      </button>
+      <SummaryModal
+        open={summaryOpen}
+        items={items}
+        config={teamConfig}
+        onClose={() => setSummaryOpen(false)}
+      />
+
+      {/* Gear menu — upper left */}
+      <div ref={gearRef} className="fixed top-4 left-4 z-50">
+        <button
+          onClick={() => setGearDropdownOpen((prev) => !prev)}
+          className="w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          aria-label="Menu"
+        >
+          <i className="fa-solid fa-gear" style={{ fontSize: 17 }} />
+        </button>
+
+        {gearDropdownOpen && (
+          <div className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg py-1 min-w-[140px]">
+            <button
+              onClick={() => { setSettingsOpen(true); setGearDropdownOpen(false); }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+            >
+              <i className="fa-solid fa-gear" style={{ fontSize: 13 }} />
+              Settings
+            </button>
+            <button
+              onClick={() => { setSummaryOpen(true); setGearDropdownOpen(false); }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+            >
+              <i className="fa-solid fa-list" style={{ fontSize: 13 }} />
+              Summary
+            </button>
+            <button
+              onClick={() => { window.open(window.location.origin + window.location.pathname, "_blank"); setGearDropdownOpen(false); }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+            >
+              <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 12 }} />
+              New...
+            </button>
+          </div>
+        )}
+      </div>
 
       {/* Copy URL button — upper right */}
       <button
@@ -243,7 +291,7 @@ export default function Home() {
         }
       </button>
 
-      {!anyDrawerOpen && (
+      {!anyDrawerOpen && !summaryOpen && (
         <button
           onClick={() => setDrawerOpen(true)}
           className="fixed bottom-6 right-6 z-50 w-14 h-14 rounded-full bg-blue-600 text-white shadow-lg flex items-center justify-center text-3xl leading-none hover:bg-blue-700 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"

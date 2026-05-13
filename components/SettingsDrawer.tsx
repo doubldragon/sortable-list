@@ -62,23 +62,13 @@ export function SettingsDrawer({ open, config, onSave, onClose }: Props) {
         <div className="w-full max-w-[600px] mx-auto">
           <div className="flex items-center justify-between mb-1">
             <h2 className="text-lg font-semibold text-gray-900">Team Settings</h2>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => window.open(window.location.origin + window.location.pathname, "_blank")}
-                className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-700 transition-colors"
-                aria-label="Create new list"
-              >
-                <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 11 }} />
-                New List
-              </button>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600 transition-colors"
-                aria-label="Close"
-              >
-                <i className="fa-solid fa-chevron-down" style={{ fontSize: 18 }} />
-              </button>
-            </div>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close"
+            >
+              <i className="fa-solid fa-chevron-down" style={{ fontSize: 18 }} />
+            </button>
           </div>
           <p className="text-xs text-gray-400 mb-5">
             Select which teams you want to include and how many players per team
