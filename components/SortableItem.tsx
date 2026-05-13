@@ -2,6 +2,13 @@ import { useSortable } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import type { ListItem } from "@/types";
 
+function borderColor(order: number): string {
+  if (order < 13) return "border-l-gray-900";
+  if (order < 26) return "border-l-blue-300";
+  if (order < 39) return "border-l-gray-400";
+  return "border-l-red-500";
+}
+
 interface Props {
   item: ListItem;
 }
@@ -28,7 +35,7 @@ export function SortableItem({ item }: Props) {
       {...attributes}
       {...listeners}
       className={[
-        "flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 rounded-lg",
+        `flex items-center gap-3 px-4 py-3 bg-white border border-gray-200 border-l-4 ${borderColor(item.order)} rounded-lg`,
         "cursor-grab active:cursor-grabbing select-none",
         isDragging ? "opacity-50 shadow-lg z-10" : "shadow-sm",
       ].join(" ")}
