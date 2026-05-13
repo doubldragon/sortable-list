@@ -44,6 +44,14 @@ export function AddItemDrawer({
     setNumberText("");
   }
 
+  function handleAddAnother() {
+    if (!isValid) return;
+    const num = numberText.trim() !== "" ? Number(numberText) : null;
+    onAdd(itemText.trim(), num);
+    setItemText("");
+    setNumberText("");
+  }
+
   return (
     <div
       className={[
@@ -56,7 +64,7 @@ export function AddItemDrawer({
         <div className="w-full max-w-[600px] mx-auto">
           <div className="flex items-center justify-between mb-4">
             <h2 className="text-lg font-semibold text-gray-900">
-              {editingItem ? "Edit item" : "Add item"}
+              {editingItem ? "Edit Player" : "Add Player"}
             </h2>
             <button
               onClick={onClose}
@@ -69,13 +77,13 @@ export function AddItemDrawer({
           <div className="flex flex-col gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
-                Item
+                Player Name
               </label>
               <input
                 type="text"
                 value={itemText}
                 onChange={(e) => setItemText(e.target.value)}
-                placeholder="Enter item name"
+                placeholder="Enter player name"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSubmit();
@@ -90,20 +98,31 @@ export function AddItemDrawer({
                 type="number"
                 value={numberText}
                 onChange={(e) => setNumberText(e.target.value)}
-                placeholder="Enter a number"
+                placeholder="Enter bib number"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSubmit();
                 }}
               />
             </div>
-            <button
-              onClick={handleSubmit}
-              disabled={!isValid}
-              className="mt-2 w-full bg-blue-600 text-white font-semibold py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
-            >
-              {editingItem ? "Update" : "Add"}
-            </button>
+            <div className="mt-2 flex gap-2">
+              {!editingItem && (
+                <button
+                  onClick={handleAddAnother}
+                  disabled={!isValid}
+                  className="flex-1 bg-white border border-blue-600 text-blue-600 font-semibold py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-50 transition-colors"
+                >
+                  Add Another
+                </button>
+              )}
+              <button
+                onClick={handleSubmit}
+                disabled={!isValid}
+                className="flex-1 bg-blue-600 text-white font-semibold py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
+              >
+                {editingItem ? "Update" : "Add"}
+              </button>
+            </div>
           </div>
         </div>
       </div>
