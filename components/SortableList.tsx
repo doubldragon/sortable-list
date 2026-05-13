@@ -14,18 +14,19 @@ import {
   verticalListSortingStrategy,
   arrayMove,
 } from "@dnd-kit/sortable";
-import type { ListItem } from "@/types";
+import type { ListItem, TeamConfig } from "@/types";
 import { SortableItem } from "./SortableItem";
 
 interface Props {
   items: ListItem[];
+  teamConfig: TeamConfig;
   onReorder: (items: ListItem[]) => void;
   onEdit: (item: ListItem) => void;
   onNotes: (item: ListItem) => void;
   onDelete: (id: string) => void;
 }
 
-export function SortableList({ items, onReorder, onEdit, onNotes, onDelete }: Props) {
+export function SortableList({ items, teamConfig, onReorder, onEdit, onNotes, onDelete }: Props) {
   const sensors = useSensors(
     useSensor(MouseSensor),
     useSensor(TouchSensor, {
@@ -64,6 +65,7 @@ export function SortableList({ items, onReorder, onEdit, onNotes, onDelete }: Pr
             <SortableItem
               key={item.id}
               item={item}
+              teamConfig={teamConfig}
               onEdit={() => onEdit(item)}
               onNotes={() => onNotes(item)}
               onDelete={() => onDelete(item.id)}
