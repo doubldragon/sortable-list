@@ -1,4 +1,5 @@
 import { createPortal } from "react-dom";
+import { useState } from "react";
 import type { ListItem, TeamConfig } from "@/types";
 
 const TEAM_META = [
@@ -27,12 +28,15 @@ interface Props {
   onClose: () => void;
 }
 
+type GroupKey = keyof TeamConfig | "none";
+
 export function SummaryModal({ open, items, config, onClose }: Props) {
+  const [expandedKeys, setExpandedKeys] = useState<Set<GroupKey>>(new Set());
+
   if (!open) return null;
 
   const sorted = [...items].sort((a, b) => a.order - b.order);
 
-  type GroupKey = keyof TeamConfig | "none";
   const groups = new Map<GroupKey, ListItem[]>();
   for (const item of sorted) {
     const key: GroupKey = getTeam(item.order, config) ?? "none";
@@ -48,6 +52,14 @@ export function SummaryModal({ open, items, config, onClose }: Props) {
       ? [{ key: "none" as GroupKey, label: "Not Selected", swatchClass: "bg-red-500", textClass: "text-white", items: groups.get("none")! }]
       : []),
   ];
+
+  function toggleDetails(key: GroupKey) {
+    setExpandedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key); else next.add(key);
+      return next;
+    });
+  }
 
   return createPortal(
     <div
@@ -71,21 +83,44 @@ export function SummaryModal({ open, items, config, onClose }: Props) {
         </div>
 
         <div className="flex flex-col gap-5 pb-5 px-3">
-          {sections.map(({ key, label, swatchClass, textClass, items: sectionItems }) => (
-            <div key={key}>
-              <div className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg ${swatchClass}`}>
-                <h3 className={`text-sm font-bold ${textClass}`}>{label}</h3>
-                <span className={`text-xs opacity-70 ${textClass}`}>({sectionItems.length})</span>
+          {sections.map(({ key, label, swatchClass, textClass, items: sectionItems }) => {
+            const isExpanded = expandedKeys.has(key);
+            return (
+              <div key={key}>
+                <div className={`flex items-center px-4 py-2 rounded-lg ${swatchClass}`}>
+                  <h3 className={`text-sm font-bold flex-1 ${textClass}`}>
+                    {label}
+                    <span className={`ml-1.5 text-xs opacity-70 font-normal ${textClass}`}>({sectionItems.length})</span>
+                  </h3>
+                  <button
+                    onClick={() => toggleDetails(key)}
+                    className={`text-xs underline underline-offset-2 transition-opacity ${textClass} opacity-70 hover:opacity-100`}
+                  >
+                    {isExpanded ? "Hide" : "Details"}
+                  </button>
+                </div>
+
+                {isExpanded ? (
+                  <div className="px-4 pt-2">
+                    {sectionItems.map((item) => (
+                      <div key={item.id} className="flex gap-3 py-1.5 border-b border-gray-100 last:border-0">
+                        <span className="text-sm text-gray-800 w-2/5 shrink-0 truncate">{item.item}</span>
+                        <span className="text-sm text-gray-500 flex-1 break-words">{item.notes ?? ""}</span>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-1 px-4 pt-2">
+                    {sectionItems.map((item) => (
+                      <span key={item.id} className="text-sm text-gray-700 truncate">
+                        {item.item}
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
-              <div className="grid grid-cols-2 gap-x-4 gap-y-1 px-4 pt-2">
-                {sectionItems.map((item) => (
-                  <span key={item.id} className="text-sm text-gray-700 truncate">
-                    {item.item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ))}
+            );
+          })}
           {sections.length === 0 && (
             <p className="text-sm text-gray-400 text-center py-4 px-5">No items yet.</p>
           )}
