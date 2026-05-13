@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
-import type { ListItem } from "@/types";
+import type { ListItem, TeamConfig } from "@/types";
 import { SortableList } from "@/components/SortableList";
 import { AddItemDrawer } from "@/components/AddItemDrawer";
 import { NotesDrawer } from "@/components/NotesDrawer";
+import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { EditableField } from "@/components/EditableField";
 
 function generateId(): string {
@@ -17,17 +18,28 @@ function safeAtob(val: string): string {
   }
 }
 
+function safeParseConfig(val: string): TeamConfig | null {
+  try {
+    return JSON.parse(atob(val)) as TeamConfig;
+  } catch {
+    return null;
+  }
+}
+
+const DEFAULT_CONFIG: TeamConfig = { black: 13, blue: 13, gray: 13, white: null };
+
 export default function Home() {
   const [items, setItems] = useState<ListItem[]>([]);
   const [listName, setListName] = useState("");
   const [authorName, setAuthorName] = useState("");
+  const [teamConfig, setTeamConfig] = useState<TeamConfig>(DEFAULT_CONFIG);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [editingItem, setEditingItem] = useState<ListItem | null>(null);
   const [notesItem, setNotesItem] = useState<ListItem | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [copied, setCopied] = useState(false);
 
-  // Read state from URL on mount (client-side only)
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
@@ -35,12 +47,8 @@ export default function Home() {
     if (listParam) {
       try {
         const parsed: unknown = JSON.parse(atob(listParam));
-        if (Array.isArray(parsed)) {
-          setItems(parsed as ListItem[]);
-        }
-      } catch {
-        // invalid param — start with empty list
-      }
+        if (Array.isArray(parsed)) setItems(parsed as ListItem[]);
+      } catch { /* invalid param */ }
     }
 
     const nameParam = params.get("name");
@@ -49,10 +57,15 @@ export default function Home() {
     const authorParam = params.get("author");
     if (authorParam) setAuthorName(safeAtob(authorParam));
 
+    const configParam = params.get("config");
+    if (configParam) {
+      const parsed = safeParseConfig(configParam);
+      if (parsed) setTeamConfig(parsed);
+    }
+
     setInitialized(true);
   }, []);
 
-  // Keep URL in sync with state
   useEffect(() => {
     if (!initialized) return;
     const url = new URL(window.location.href);
@@ -75,8 +88,10 @@ export default function Home() {
       url.searchParams.delete("author");
     }
 
+    url.searchParams.set("config", btoa(JSON.stringify(teamConfig)));
+
     window.history.replaceState(null, "", url.toString());
-  }, [items, listName, authorName, initialized]);
+  }, [items, listName, authorName, teamConfig, initialized]);
 
   const handleAdd = useCallback((item: string, number: number | null) => {
     setItems((prev) => [
@@ -136,7 +151,7 @@ export default function Home() {
   }
 
   const sortedItems = [...items].sort((a, b) => a.order - b.order);
-  const anyDrawerOpen = drawerOpen || notesItem !== null;
+  const anyDrawerOpen = drawerOpen || notesItem !== null || settingsOpen;
 
   return (
     <>
@@ -164,6 +179,7 @@ export default function Home() {
           ) : (
             <SortableList
               items={sortedItems}
+              teamConfig={teamConfig}
               onReorder={setItems}
               onEdit={handleEdit}
               onNotes={handleNotes}
@@ -173,7 +189,6 @@ export default function Home() {
         </div>
       </main>
 
-      {/* Backdrop */}
       {anyDrawerOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/20"
@@ -181,6 +196,7 @@ export default function Home() {
             setDrawerOpen(false);
             setEditingItem(null);
             setNotesItem(null);
+            setSettingsOpen(false);
           }}
         />
       )}
@@ -199,25 +215,34 @@ export default function Home() {
         onClose={() => setNotesItem(null)}
       />
 
-      {/* Copy URL button */}
+      <SettingsDrawer
+        open={settingsOpen}
+        config={teamConfig}
+        onSave={setTeamConfig}
+        onClose={() => setSettingsOpen(false)}
+      />
+
+      {/* Settings button — upper left */}
+      <button
+        onClick={() => setSettingsOpen(true)}
+        className="fixed top-4 left-4 z-50 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        aria-label="Settings"
+      >
+        <i className="fa-solid fa-gear" style={{ fontSize: 17 }} />
+      </button>
+
+      {/* Copy URL button — upper right */}
       <button
         onClick={handleCopy}
         className="fixed top-4 right-4 z-50 w-10 h-10 rounded-full bg-white border border-gray-200 shadow-md flex items-center justify-center text-gray-500 hover:text-blue-600 hover:border-blue-300 transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         aria-label="Copy page URL"
       >
-        {copied ? (
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="20 6 9 17 4 12" />
-          </svg>
-        ) : (
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
-            <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
-          </svg>
-        )}
+        {copied
+          ? <i className="fa-solid fa-check" style={{ fontSize: 17 }} />
+          : <i className="fa-regular fa-copy" style={{ fontSize: 17 }} />
+        }
       </button>
 
-      {/* FAB */}
       {!anyDrawerOpen && (
         <button
           onClick={() => setDrawerOpen(true)}
