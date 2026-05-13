@@ -1,21 +1,45 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import type { ListItem } from "@/types";
 
 interface Props {
   open: boolean;
   onAdd: (item: string, number: number | null) => void;
+  onUpdate: (id: string, item: string, number: number | null) => void;
   onClose: () => void;
+  editingItem?: ListItem | null;
 }
 
-export function AddItemDrawer({ open, onAdd, onClose }: Props) {
+export function AddItemDrawer({
+  open,
+  onAdd,
+  onUpdate,
+  onClose,
+  editingItem,
+}: Props) {
   const [itemText, setItemText] = useState("");
   const [numberText, setNumberText] = useState("");
 
+  useEffect(() => {
+    if (!open) return;
+    if (editingItem) {
+      setItemText(editingItem.item);
+      setNumberText(editingItem.number !== null ? String(editingItem.number) : "");
+    } else {
+      setItemText("");
+      setNumberText("");
+    }
+  }, [open, editingItem]);
+
   const isValid = itemText.trim() !== "" || numberText.trim() !== "";
 
-  function handleAdd() {
+  function handleSubmit() {
     if (!isValid) return;
     const num = numberText.trim() !== "" ? Number(numberText) : null;
-    onAdd(itemText.trim(), num);
+    if (editingItem) {
+      onUpdate(editingItem.id, itemText.trim(), num);
+    } else {
+      onAdd(itemText.trim(), num);
+    }
     setItemText("");
     setNumberText("");
   }
@@ -31,13 +55,25 @@ export function AddItemDrawer({ open, onAdd, onClose }: Props) {
       <div className="bg-white border-t border-gray-200 shadow-2xl rounded-t-2xl px-4 pt-4 pb-8">
         <div className="w-full max-w-[600px] mx-auto">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-gray-900">Add item</h2>
+            <h2 className="text-lg font-semibold text-gray-900">
+              {editingItem ? "Edit item" : "Add item"}
+            </h2>
             <button
               onClick={onClose}
               className="text-gray-400 hover:text-gray-600 transition-colors"
               aria-label="Close drawer"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="22"
+                height="22"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              >
                 <polyline points="6 9 12 15 18 9" />
               </svg>
             </button>
@@ -54,7 +90,7 @@ export function AddItemDrawer({ open, onAdd, onClose }: Props) {
                 placeholder="Enter item name"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAdd();
+                  if (e.key === "Enter") handleSubmit();
                 }}
               />
             </div>
@@ -69,16 +105,16 @@ export function AddItemDrawer({ open, onAdd, onClose }: Props) {
                 placeholder="Enter a number"
                 className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 onKeyDown={(e) => {
-                  if (e.key === "Enter") handleAdd();
+                  if (e.key === "Enter") handleSubmit();
                 }}
               />
             </div>
             <button
-              onClick={handleAdd}
+              onClick={handleSubmit}
               disabled={!isValid}
               className="mt-2 w-full bg-blue-600 text-white font-semibold py-2 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-blue-700 transition-colors"
             >
-              Add
+              {editingItem ? "Update" : "Add"}
             </button>
           </div>
         </div>
