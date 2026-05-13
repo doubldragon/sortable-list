@@ -3,9 +3,10 @@ import { useState } from "react";
 interface Props {
   open: boolean;
   onAdd: (item: string, number: number | null) => void;
+  onClose: () => void;
 }
 
-export function AddItemDrawer({ open, onAdd }: Props) {
+export function AddItemDrawer({ open, onAdd, onClose }: Props) {
   const [itemText, setItemText] = useState("");
   const [numberText, setNumberText] = useState("");
 
@@ -27,11 +28,20 @@ export function AddItemDrawer({ open, onAdd }: Props) {
         open ? "translate-y-0" : "translate-y-full",
       ].join(" ")}
     >
-      <div className="bg-white border-t border-gray-200 shadow-2xl rounded-t-2xl px-4 pt-6 pb-8">
+      <div className="bg-white border-t border-gray-200 shadow-2xl rounded-t-2xl px-4 pt-4 pb-8">
         <div className="w-full max-w-[600px] mx-auto">
-          <h2 className="text-lg font-semibold text-gray-900 mb-4">
-            Add item
-          </h2>
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-semibold text-gray-900">Add item</h2>
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+              aria-label="Close drawer"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            </button>
+          </div>
           <div className="flex flex-col gap-3">
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-1">
