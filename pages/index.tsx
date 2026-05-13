@@ -5,6 +5,7 @@ import { AddItemDrawer } from "@/components/AddItemDrawer";
 import { NotesDrawer } from "@/components/NotesDrawer";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { SummaryModal } from "@/components/SummaryModal";
+import { HelpModal } from "@/components/HelpModal";
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 9);
@@ -42,6 +43,7 @@ export default function Home() {
   const [copying, setCopying] = useState(false);
   const [gearDropdownOpen, setGearDropdownOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const gearRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -264,6 +266,11 @@ export default function Home() {
         onClose={() => setSummaryOpen(false)}
       />
 
+      <HelpModal
+        open={helpOpen}
+        onClose={() => setHelpOpen(false)}
+      />
+
       {/* Gear menu — upper left */}
       <div ref={gearRef} className="fixed top-4 left-4 z-50">
         <button
@@ -280,21 +287,28 @@ export default function Home() {
               onClick={() => { setSettingsOpen(true); setGearDropdownOpen(false); }}
               className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
             >
-              <i className="fa-solid fa-gear" style={{ fontSize: 13 }} />
+              <i className="fa-solid fa-gear text-blue-500" style={{ fontSize: 13 }} />
               Settings
             </button>
             <button
               onClick={() => { setSummaryOpen(true); setGearDropdownOpen(false); }}
               className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
             >
-              <i className="fa-solid fa-list" style={{ fontSize: 13 }} />
+              <i className="fa-solid fa-list text-blue-500" style={{ fontSize: 13 }} />
               Summary
+            </button>
+            <button
+              onClick={() => { setHelpOpen(true); setGearDropdownOpen(false); }}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
+            >
+              <i className="fa-solid fa-circle-question text-blue-500" style={{ fontSize: 13 }} />
+              Help
             </button>
             <button
               onClick={() => { window.open(window.location.origin + window.location.pathname, "_blank"); setGearDropdownOpen(false); }}
               className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700"
             >
-              <i className="fa-solid fa-arrow-up-right-from-square" style={{ fontSize: 12 }} />
+              <i className="fa-solid fa-arrow-up-right-from-square text-blue-500" style={{ fontSize: 12 }} />
               New...
             </button>
           </div>
