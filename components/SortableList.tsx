@@ -20,9 +20,12 @@ import { SortableItem } from "./SortableItem";
 interface Props {
   items: ListItem[];
   onReorder: (items: ListItem[]) => void;
+  onEdit: (item: ListItem) => void;
+  onNotes: (item: ListItem) => void;
+  onDelete: (id: string) => void;
 }
 
-export function SortableList({ items, onReorder }: Props) {
+export function SortableList({ items, onReorder, onEdit, onNotes, onDelete }: Props) {
   const sensors = useSensors(
     useSensor(MouseSensor),
     useSensor(TouchSensor, {
@@ -58,7 +61,13 @@ export function SortableList({ items, onReorder }: Props) {
       >
         <div className="flex flex-col gap-2">
           {items.map((item) => (
-            <SortableItem key={item.id} item={item} />
+            <SortableItem
+              key={item.id}
+              item={item}
+              onEdit={() => onEdit(item)}
+              onNotes={() => onNotes(item)}
+              onDelete={() => onDelete(item.id)}
+            />
           ))}
         </div>
       </SortableContext>
