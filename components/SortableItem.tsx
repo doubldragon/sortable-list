@@ -271,7 +271,7 @@ export function SortableItem({ item, teamConfig, onEdit, onNotes, onDelete }: Pr
             <p className="text-sm text-gray-700 whitespace-pre-wrap mb-4">{item.notes}</p>
             <button
               onClick={() => { setNotesModalOpen(false); onNotes(); }}
-              className="w-full bg-yellow-500 text-white font-semibold py-2 rounded-lg hover:bg-yellow-600 transition-colors"
+              className="mx-auto block bg-yellow-500 text-white font-semibold px-6 py-2 rounded-lg hover:bg-yellow-600 transition-colors"
             >
               Edit
             </button>

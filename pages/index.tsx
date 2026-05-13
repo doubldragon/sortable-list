@@ -5,7 +5,6 @@ import { AddItemDrawer } from "@/components/AddItemDrawer";
 import { NotesDrawer } from "@/components/NotesDrawer";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { SummaryModal } from "@/components/SummaryModal";
-import { EditableField } from "@/components/EditableField";
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 9);
@@ -66,6 +65,10 @@ export default function Home() {
     if (configParam) {
       const parsed = safeParseConfig(configParam);
       if (parsed) setTeamConfig(parsed);
+    }
+
+    if (!params.get("name") && !params.get("list")) {
+      setSettingsOpen(true);
     }
 
     setInitialized(true);
@@ -186,34 +189,31 @@ export default function Home() {
     <>
       <main className="min-h-screen py-8 px-4">
         <div className="w-full max-w-[600px] mx-auto">
-          <div className="mb-6 flex flex-col gap-1.5">
-            <EditableField
-              value={listName}
-              onSave={setListName}
-              placeholder="Enter list name..."
-              textClassName="text-xl font-bold text-gray-900"
-            />
-            <EditableField
-              value={authorName}
-              onSave={setAuthorName}
-              placeholder="Enter author name..."
-              textClassName="text-sm text-gray-500"
-            />
+          <div className="mb-6 flex flex-col gap-1 text-center">
+            <h1 className="text-xl font-bold text-gray-900">{listName || "Untitled List"}</h1>
+            <p className="text-sm text-gray-500">{authorName || "Unknown"}</p>
           </div>
+
 
           {sortedItems.length === 0 ? (
             <p className="text-center text-gray-400 mt-12 text-sm">
               No items yet. Press + to add one.
             </p>
           ) : (
-            <SortableList
-              items={sortedItems}
-              teamConfig={teamConfig}
-              onReorder={setItems}
-              onEdit={handleEdit}
-              onNotes={handleNotes}
-              onDelete={handleDelete}
-            />
+            <div>
+              <div className="mb-6 flex flex-col gap-1 text-center">
+                <p className="text-sm text-gray-500">{`Player Count: ${sortedItems.length}`}</p>
+
+              </div>
+              <SortableList
+                items={sortedItems}
+                teamConfig={teamConfig}
+                onReorder={setItems}
+                onEdit={handleEdit}
+                onNotes={handleNotes}
+                onDelete={handleDelete}
+              />
+            </div>
           )}
         </div>
       </main>
@@ -246,8 +246,14 @@ export default function Home() {
 
       <SettingsDrawer
         open={settingsOpen}
+        listName={listName}
+        authorName={authorName}
         config={teamConfig}
-        onSave={setTeamConfig}
+        onSave={(config, name, author) => {
+          setTeamConfig(config);
+          setListName(name);
+          setAuthorName(author);
+        }}
         onClose={() => setSettingsOpen(false)}
       />
 
