@@ -40,6 +40,7 @@ export default function Home() {
   const [notesItem, setNotesItem] = useState<ListItem | null>(null);
   const [initialized, setInitialized] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copying, setCopying] = useState(false);
   const [gearDropdownOpen, setGearDropdownOpen] = useState(false);
   const [summaryOpen, setSummaryOpen] = useState(false);
   const gearRef = useRef<HTMLDivElement>(null);
@@ -156,8 +157,23 @@ export default function Home() {
     setEditingItem(null);
   }
 
-  function handleCopy() {
-    void navigator.clipboard.writeText(window.location.href).then(() => {
+  async function handleCopy() {
+    if (copying) return;
+    setCopying(true);
+    const longUrl = window.location.href;
+    let url = longUrl;
+    const isLocal = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+    if (!isLocal) {
+      try {
+        const res = await fetch(
+          `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`
+        );
+        const data = await res.json() as { shorturl?: string };
+        if (data.shorturl) url = data.shorturl;
+      } catch { /* fall back to long url */ }
+    }
+    setCopying(false);
+    void navigator.clipboard.writeText(url).then(() => {
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     });
@@ -287,6 +303,8 @@ export default function Home() {
       >
         {copied
           ? <i className="fa-solid fa-check" style={{ fontSize: 17 }} />
+          : copying
+          ? <i className="fa-solid fa-spinner fa-spin" style={{ fontSize: 15 }} />
           : <i className="fa-regular fa-copy" style={{ fontSize: 17 }} />
         }
       </button>
