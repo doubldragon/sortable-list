@@ -5,6 +5,7 @@ import { AddItemDrawer } from "@/components/AddItemDrawer";
 import { NotesDrawer } from "@/components/NotesDrawer";
 import { SettingsDrawer } from "@/components/SettingsDrawer";
 import { SummaryModal } from "@/components/SummaryModal";
+import { SummaryView } from "@/components/SummaryView";
 import { HelpModal } from "@/components/HelpModal";
 
 function generateId(): string {
@@ -45,6 +46,7 @@ export default function Home() {
   const [summaryOpen, setSummaryOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const [sortMode, setSortMode] = useState<"ranking" | "bib" | "name">("ranking");
+  const [viewMode, setViewMode] = useState<"list" | "summary">("list");
   const gearRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -74,6 +76,8 @@ export default function Home() {
       setSettingsOpen(true);
     }
 
+    if (params.get("view") === "summary") setViewMode("summary");
+
     setInitialized(true);
   }, []);
 
@@ -101,15 +105,20 @@ export default function Home() {
 
     url.searchParams.set("config", btoa(JSON.stringify(teamConfig)));
 
+    if (viewMode === "summary") {
+      url.searchParams.set("view", "summary");
+    } else {
+      url.searchParams.delete("view");
+    }
+
     window.history.replaceState(null, "", url.toString());
-  }, [items, listName, authorName, teamConfig, initialized]);
+  }, [items, listName, authorName, teamConfig, viewMode, initialized]);
 
   const handleAdd = useCallback((item: string, number: number | null) => {
     setItems((prev) => [
       ...prev,
       { id: generateId(), item, number, order: prev.length },
     ]);
-    setDrawerOpen(false);
   }, []);
 
   const handleEdit = useCallback((item: ListItem) => {
@@ -218,26 +227,52 @@ export default function Home() {
           ) : (
             <div>
               <div className="mb-3 flex items-center gap-2">
-                <span className="text-xs text-gray-500">Sort by</span>
-                <select
-                  value={sortMode}
-                  onChange={(e) => setSortMode(e.target.value as "ranking" | "bib" | "name")}
-                  className="text-xs border border-gray-300 rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                >
-                  <option value="ranking">Ranking</option>
-                  <option value="bib">Bib Number</option>
-                  <option value="name">Name</option>
-                </select>
+                {viewMode === "list" &&
+                  <>
+                    <span className="text-xs text-gray-500">Sort by</span>
+                    <select
+                      value={sortMode}
+                      onChange={(e) => setSortMode(e.target.value as "ranking" | "bib" | "name")}
+                      className="text-xs border border-gray-300 rounded px-2 py-1 text-gray-700 bg-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="ranking">Ranking</option>
+                      <option value="bib">Bib Number</option>
+                      <option value="name">Name</option>
+                    </select>
+                  </>
+                }
+                <div className="ml-auto flex items-center gap-2">
+                  <span className={`text-xs ${viewMode === "list" ? "text-blue-600":"text-gray-500"}`}>Rankings</span>
+                  <button
+                    role="switch"
+                    aria-checked={viewMode === "summary"}
+                    onClick={() => setViewMode(viewMode === "list" ? "summary" : "list")}
+                    className={`relative inline-flex h-5 w-9 shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 ${
+                      viewMode === "summary" ? "bg-blue-600" : "bg-gray-300"
+                    }`}
+                  >
+                    <span
+                      className={`inline-block h-4 w-4 rounded-full bg-white shadow transition-transform ${
+                        viewMode === "summary" ? "translate-x-4" : "translate-x-0.5"
+                      }`}
+                    />
+                  </button>
+                  <span className={`text-xs ${viewMode === "summary" ? "text-blue-600":"text-gray-500"}`}>Summary</span>
+                </div>
               </div>
-              <SortableList
-                items={sortedItems}
-                teamConfig={teamConfig}
-                onReorder={setItems}
-                onEdit={handleEdit}
-                onNotes={handleNotes}
-                onDelete={handleDelete}
-                draggable={sortMode === "ranking"}
-              />
+              {viewMode === "summary" ? (
+                <SummaryView items={items} config={teamConfig} />
+              ) : (
+                <SortableList
+                  items={sortedItems}
+                  teamConfig={teamConfig}
+                  onReorder={setItems}
+                  onEdit={handleEdit}
+                  onNotes={handleNotes}
+                  onDelete={handleDelete}
+                  draggable={sortMode === "ranking"}
+                />
+              )}
             </div>
           )}
         </div>
@@ -257,6 +292,7 @@ export default function Home() {
 
       <AddItemDrawer
         open={drawerOpen}
+        items={items}
         onAdd={handleAdd}
         onUpdate={handleUpdate}
         onClose={handleCloseDrawer}
