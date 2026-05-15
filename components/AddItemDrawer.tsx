@@ -1,8 +1,9 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { ListItem } from "@/types";
 
 interface Props {
   open: boolean;
+  items: ListItem[];
   onAdd: (item: string, number: number | null) => void;
   onUpdate: (id: string, item: string, number: number | null) => void;
   onClose: () => void;
@@ -11,6 +12,7 @@ interface Props {
 
 export function AddItemDrawer({
   open,
+  items,
   onAdd,
   onUpdate,
   onClose,
@@ -18,6 +20,8 @@ export function AddItemDrawer({
 }: Props) {
   const [itemText, setItemText] = useState("");
   const [numberText, setNumberText] = useState("");
+  const [bibError, setBibError] = useState<string | null>(null);
+  const nameInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     if (!open) return;
@@ -28,28 +32,46 @@ export function AddItemDrawer({
       setItemText("");
       setNumberText("");
     }
+    setBibError(null);
+    setTimeout(() => nameInputRef.current?.focus(), 50);
   }, [open, editingItem]);
+
+  const isBibTaken = () =>
+    numberText.trim() !== "" &&
+    items.some((i) => i.number === Number(numberText) && i.id !== editingItem?.id);
 
   const isValid = itemText.trim() !== "" || numberText.trim() !== "";
 
   function handleSubmit() {
     if (!isValid) return;
+    if (isBibTaken()) {
+      setBibError(`Bib #${numberText} is already assigned`);
+      return;
+    }
     const num = numberText.trim() !== "" ? Number(numberText) : null;
     if (editingItem) {
       onUpdate(editingItem.id, itemText.trim(), num);
     } else {
       onAdd(itemText.trim(), num);
+      onClose();
     }
     setItemText("");
     setNumberText("");
+    setBibError(null);
   }
 
   function handleAddAnother() {
     if (!isValid) return;
+    if (isBibTaken()) {
+      setBibError(`Bib #${numberText} is already assigned`);
+      return;
+    }
     const num = numberText.trim() !== "" ? Number(numberText) : null;
     onAdd(itemText.trim(), num);
     setItemText("");
     setNumberText("");
+    setBibError(null);
+    setTimeout(() => nameInputRef.current?.focus(), 0);
   }
 
   return (
@@ -80,6 +102,7 @@ export function AddItemDrawer({
                 Player Name
               </label>
               <input
+                ref={nameInputRef}
                 type="text"
                 value={itemText}
                 onChange={(e) => setItemText(e.target.value)}
@@ -97,13 +120,16 @@ export function AddItemDrawer({
               <input
                 type="number"
                 value={numberText}
-                onChange={(e) => setNumberText(e.target.value)}
+                onChange={(e) => { setNumberText(e.target.value); setBibError(null); }}
                 placeholder="Enter bib number"
-                className="w-full border border-gray-300 rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className={`w-full border rounded-lg px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:border-transparent ${
+                  bibError ? "border-red-400 focus:ring-red-400" : "border-gray-300 focus:ring-blue-500"
+                }`}
                 onKeyDown={(e) => {
                   if (e.key === "Enter") handleSubmit();
                 }}
               />
+              {bibError && <p className="mt-1 text-xs text-red-500">{bibError}</p>}
             </div>
             <div className="mt-2 flex gap-2">
               {!editingItem && (
