@@ -181,10 +181,10 @@ export default function Home() {
     if (!isLocal) {
       try {
         const res = await fetch(
-          `https://is.gd/create.php?format=json&url=${encodeURIComponent(longUrl)}`
+          `https://tinyurl.com/api-create.php?url=${encodeURIComponent(longUrl)}`
         );
-        const data = await res.json() as { shorturl?: string };
-        if (data.shorturl) url = data.shorturl;
+        const short = (await res.text()).trim();
+        if (short.startsWith("https://") || short.startsWith("http://")) url = short;
       } catch { /* fall back to long url */ }
     }
     setCopying(false);
