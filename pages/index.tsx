@@ -47,6 +47,7 @@ export default function Home() {
   const [helpOpen, setHelpOpen] = useState(false);
   const [sortMode, setSortMode] = useState<"ranking" | "bib" | "name">("ranking");
   const [viewMode, setViewMode] = useState<"list" | "summary">("list");
+  const [pdfExporting, setPdfExporting] = useState(false);
   const gearRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -170,6 +171,17 @@ export default function Home() {
   function handleCloseDrawer() {
     setDrawerOpen(false);
     setEditingItem(null);
+  }
+
+  async function handleExportPdf() {
+    if (pdfExporting) return;
+    setPdfExporting(true);
+    try {
+      const { openListPdf } = await import("@/utils/generatePdf");
+      await openListPdf(items, teamConfig, listName, authorName);
+    } finally {
+      setPdfExporting(false);
+    }
   }
 
   async function handleCopy() {
@@ -369,6 +381,17 @@ export default function Home() {
             >
               <i className="fa-solid fa-arrow-up-right-from-square text-blue-500" style={{ fontSize: 12 }} />
               New...
+            </button>
+            <button
+              onClick={() => { void handleExportPdf(); setGearDropdownOpen(false); }}
+              disabled={pdfExporting}
+              className="w-full text-left px-3 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 text-gray-700 disabled:opacity-50"
+            >
+              {pdfExporting
+                ? <i className="fa-solid fa-spinner fa-spin text-blue-500" style={{ fontSize: 13 }} />
+                : <i className="fa-solid fa-file-pdf text-blue-500" style={{ fontSize: 13 }} />
+              }
+              Export PDF
             </button>
           </div>
         )}
