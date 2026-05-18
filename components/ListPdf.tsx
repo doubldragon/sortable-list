@@ -30,7 +30,7 @@ const s = StyleSheet.create({
   headerCount: { fontSize: 9 },
   row: { flexDirection: "row", paddingVertical: 4, paddingHorizontal: 10, borderBottomWidth: 0.5, borderBottomColor: "#f3f4f6" },
   bib: { width: 32, fontFamily: "Helvetica-Bold", color: "#2563eb" },
-  name: { width: "40%", color: "#1f2937" },
+  name: { width: "20%", color: "#1f2937" },
   notes: { flex: 1, color: "#6b7280" },
 });
 
