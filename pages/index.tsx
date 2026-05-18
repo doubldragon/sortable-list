@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import LZString from "lz-string";
 import type { ListItem, TeamConfig } from "@/types";
 import { SortableList } from "@/components/SortableList";
 import { AddItemDrawer } from "@/components/AddItemDrawer";
@@ -10,22 +11,6 @@ import { HelpModal } from "@/components/HelpModal";
 
 function generateId(): string {
   return Math.random().toString(36).slice(2, 9);
-}
-
-function safeAtob(val: string): string {
-  try {
-    return atob(val);
-  } catch {
-    return "";
-  }
-}
-
-function safeParseConfig(val: string): TeamConfig | null {
-  try {
-    return JSON.parse(atob(val)) as TeamConfig;
-  } catch {
-    return null;
-  }
 }
 
 const DEFAULT_CONFIG: TeamConfig = { black: 13, blue: 13, gray: 13, white: null };
@@ -53,27 +38,38 @@ export default function Home() {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
 
-    const listParam = params.get("list");
-    if (listParam) {
+    const dParam = params.get("d");
+    if (dParam) {
       try {
-        const parsed: unknown = JSON.parse(atob(listParam));
-        if (Array.isArray(parsed)) setItems(parsed as ListItem[]);
+        const { items, name, author, config } = JSON.parse(
+          LZString.decompressFromEncodedURIComponent(dParam)
+        );
+        if (Array.isArray(items)) setItems(items as ListItem[]);
+        if (name) setListName(name as string);
+        if (author) setAuthorName(author as string);
+        if (config) setTeamConfig(config as TeamConfig);
+      } catch { /* invalid param */ }
+    } else {
+      // legacy base64 params
+      try {
+        const listParam = params.get("list");
+        if (listParam) {
+          const parsed: unknown = JSON.parse(atob(listParam));
+          if (Array.isArray(parsed)) setItems(parsed as ListItem[]);
+        }
+        const nameParam = params.get("name");
+        if (nameParam) setListName(atob(nameParam));
+        const authorParam = params.get("author");
+        if (authorParam) setAuthorName(atob(authorParam));
+        const configParam = params.get("config");
+        if (configParam) {
+          const parsed = JSON.parse(atob(configParam)) as TeamConfig;
+          setTeamConfig(parsed);
+        }
       } catch { /* invalid param */ }
     }
 
-    const nameParam = params.get("name");
-    if (nameParam) setListName(safeAtob(nameParam));
-
-    const authorParam = params.get("author");
-    if (authorParam) setAuthorName(safeAtob(authorParam));
-
-    const configParam = params.get("config");
-    if (configParam) {
-      const parsed = safeParseConfig(configParam);
-      if (parsed) setTeamConfig(parsed);
-    }
-
-    if (!params.get("name") && !params.get("list")) {
+    if (!dParam && !params.get("name") && !params.get("list")) {
       setSettingsOpen(true);
     }
 
@@ -86,25 +82,14 @@ export default function Home() {
     if (!initialized) return;
     const url = new URL(window.location.href);
 
-    if (items.length === 0) {
-      url.searchParams.delete("list");
-    } else {
-      url.searchParams.set("list", btoa(JSON.stringify(items)));
-    }
+    // clear legacy params
+    url.searchParams.delete("list");
+    url.searchParams.delete("name");
+    url.searchParams.delete("author");
+    url.searchParams.delete("config");
 
-    if (listName) {
-      url.searchParams.set("name", btoa(listName));
-    } else {
-      url.searchParams.delete("name");
-    }
-
-    if (authorName) {
-      url.searchParams.set("author", btoa(authorName));
-    } else {
-      url.searchParams.delete("author");
-    }
-
-    url.searchParams.set("config", btoa(JSON.stringify(teamConfig)));
+    const data = { items, name: listName, author: authorName, config: teamConfig };
+    url.searchParams.set("d", LZString.compressToEncodedURIComponent(JSON.stringify(data)));
 
     if (viewMode === "summary") {
       url.searchParams.set("view", "summary");
